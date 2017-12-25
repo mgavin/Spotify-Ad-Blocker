@@ -47,23 +47,9 @@ namespace EZBlocker
         private const int APPCOMMAND_VOLUME_MUTE = 0x80000;
         private const int MEDIA_PLAYPAUSE = 0xE0000;
         private const int MEDIA_NEXTTRACK = 0xB0000;
-        
+
         private string EZBlockerUA = "EZBlocker " + Assembly.GetExecutingAssembly().GetName().Version.ToString() + " " + System.Environment.OSVersion;
         private const string website = @"https://www.ericzhang.me/projects/spotify-ad-blocker-ezblocker/";
-
-        // Google Analytics stuff
-        private Random rnd;
-        private long starttime, lasttime;
-        private string visitorId;
-        private int runs = 1;
-        private const string domainHash = "69214020";
-        private const string source = "EZBlocker";
-        private string medium = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        private const string sessionNumber = "1";
-        private const string campaignNumber = "1";
-        private string language = Thread.CurrentThread.CurrentCulture.Name;
-        private string screenRes = Screen.PrimaryScreen.Bounds.Width + "x" + Screen.PrimaryScreen.Bounds.Height;
-        private const string trackingId = "UA-42480515-3";
 
         public Main()
         {
@@ -108,7 +94,6 @@ namespace EZBlocker
                             if (!muted) Mute(1);
                             artistTooltip.SetToolTip(StatusLabel, StatusLabel.Text = "Muting ad");
                             lastArtistName = whr.artistName;
-                            LogAction("/mute/" + whr.artistName);
                             Debug.WriteLine("Blocked " + whr.artistName);
                         }
                     }
@@ -164,10 +149,10 @@ namespace EZBlocker
                 File.AppendAllText(logPath, ex.Message);
             }
         }
-       
+
         /**
          * Mutes/Unmutes Spotify.
-         
+
          * i: 0 = unmute, 1 = mute, 2 = toggle
          **/
         private void Mute(int i)
@@ -327,7 +312,6 @@ namespace EZBlocker
          **/
         private void Heartbeat_Tick(object sender, EventArgs e)
         {
-            LogAction("/heartbeat");
         }
 
         private static bool hasNet45()
@@ -343,46 +327,13 @@ namespace EZBlocker
             return false;
         }
 
-        /**
-         * Based off of: http://stackoverflow.com/questions/12851868/how-to-send-request-to-google-analytics-in-non-web-based-app
-         * 
-         * Logs actions using Google Analytics
-         **/
-        private void LogAction(string pagename)
-        {
-            try
-            {
-                lasttime = DateTime.Now.Ticks;
-                string statsRequest = "http://www.google-analytics.com/__utm.gif" +
-                    "?utmwv=4.6.5" +
-                    "&utmn=" + rnd.Next(100000000, 999999999) +
-                    "&utmcs=-" +
-                    "&utmsr=" + screenRes +
-                    "&utmsc=-" +
-                    "&utmul=" + language +
-                    "&utmje=-" +
-                    "&utmfl=-" +
-                    "&utmdt=" + pagename +
-                    "&utmp=" + pagename +
-                    "&utmac=" + trackingId + // Account number
-                    "&utmcc=" +
-                        "__utma%3D" + domainHash + "." + visitorId + "." + starttime + "." + lasttime + "." + starttime + "." + (runs++) +
-                        "%3B%2B__utmz%3D" + domainHash + "." + lasttime + "." + sessionNumber + "." + campaignNumber + ".utmcsr%3D" + source + "%7Cutmccn%3D(" + medium + ")%7Cutmcmd%3D" + medium + "%7Cutmcct%3D%2Fd31AaOM%3B";
-                using (var client = new WebClient())
-                {
-                    client.DownloadData(statsRequest);
-                }
-            }
-            catch { /*ignore*/ }
-        }
-
         private void RestoreFromTray()
         {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
         }
-        
+
         /**
          * Processes window message and shows EZBlocker when attempting to launch a second instance.
          **/
@@ -435,7 +386,6 @@ namespace EZBlocker
         {
             spotifyMute = SpotifyMuteCheckbox.Checked;
             if (visitorId == null) return; // Still setting up UI
-            LogAction("/settings/spotifyMute/" + spotifyMute.ToString());
             Properties.Settings.Default.SpotifyMute = spotifyMute;
             Properties.Settings.Default.Save();
         }
@@ -472,7 +422,6 @@ namespace EZBlocker
                     }
                 }
                 MessageBox.Show("You may need to restart Spotify or your computer for this setting to take effect.", "EZBlocker", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LogAction("/settings/blockBanners/" + BlockBannersCheckbox.Checked.ToString());
             }
             catch (Exception ex)
             {
@@ -492,7 +441,6 @@ namespace EZBlocker
             {
                 startupKey.DeleteValue("EZBlocker");
             }
-            LogAction("/settings/startup/" + StartupCheckbox.Checked.ToString());
         }
 
         private void VolumeMixerButton_Click(object sender, EventArgs e)
@@ -500,7 +448,6 @@ namespace EZBlocker
             try
             {
                 Process.Start(volumeMixerPath);
-                LogAction("/button/volumemixer");
             }
             catch (Exception ignore)
             {
@@ -511,14 +458,12 @@ namespace EZBlocker
         private void MuteButton_Click(object sender, EventArgs e)
         {
             Mute(2);
-            LogAction("/button/mute/" + muted.ToString());
         }
 
         private void WebsiteLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             MessageBox.Show("Please leave a comment describing one of these problems:\r\n\r\n1. Audio ads are not muted\r\n2. Audio ads are not blocked but muted\r\n3. Banner ads are not blocked\r\n\r\nNot using one of these will cause your comment to be deleted.\r\n\r\nPlease note that #2 and #3 are experimental features and not guaranteed to work.", "EZBlocker");
             Process.Start(website);
-            LogAction("/button/website");
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -531,7 +476,7 @@ namespace EZBlocker
                 for (int i = 0; i < lines.Length; i++)
                 {
                     if (lines[i].Contains("webhelper.enabled"))
-                    {   
+                    {
                         if (lines[i].Contains("false"))
                         {
                             lines[i] = "webhelper.enabled=true";
@@ -620,16 +565,6 @@ namespace EZBlocker
                 }
             }
 
-            // Google Analytics
-            rnd = new Random(Environment.TickCount);
-            starttime = DateTime.Now.Ticks;
-            if (String.IsNullOrEmpty(Properties.Settings.Default.UID))
-            {
-                Properties.Settings.Default.UID = rnd.Next(100000000, 999999999).ToString(); // Build unique visitorId;
-                Properties.Settings.Default.Save();
-            }
-            visitorId = Properties.Settings.Default.UID;
-            
             File.AppendAllText(logPath, "-----------\r\n");
             bool unsafeHeaders = WebHelperHook.SetAllowUnsafeHeaderParsing20();
             Debug.WriteLine("Unsafe Headers: " + unsafeHeaders);
@@ -646,7 +581,7 @@ namespace EZBlocker
             }
 
             Mute(0);
-            
+
             MainTimer.Enabled = true;
 
             if (Process.GetProcessesByName("spotifywebhelper").Length < 1)
@@ -655,7 +590,6 @@ namespace EZBlocker
 
             }
 
-            LogAction("/launch");
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
