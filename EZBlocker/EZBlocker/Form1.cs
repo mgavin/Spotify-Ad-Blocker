@@ -385,14 +385,12 @@ namespace EZBlocker
         private void SpotifyMuteCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             spotifyMute = SpotifyMuteCheckbox.Checked;
-            if (visitorId == null) return; // Still setting up UI
             Properties.Settings.Default.SpotifyMute = spotifyMute;
             Properties.Settings.Default.Save();
         }
 
         private void SkipAdsCheckbox_Click(object sender, EventArgs e)
         {
-            if (visitorId == null) return; // Still setting up UI
             if (!IsUserAnAdmin())
             {
                 MessageBox.Show("Enabling/Disabling this option requires Administrator privileges.\n\nPlease reopen EZBlocker with \"Run as Administrator\".", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -431,7 +429,6 @@ namespace EZBlocker
 
         private void StartupCheckbox_CheckedChanged(object sender, EventArgs e)
         {
-            if (visitorId == null) return; // Still setting up UI
             RegistryKey startupKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
             if (StartupCheckbox.Checked)
             {
